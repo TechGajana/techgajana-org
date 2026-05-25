@@ -23,17 +23,12 @@ export async function POST(req: Request) {
 
     const fileName = `${Date.now()}.${fileExt}`;
 
-    const { data, error } =
+    const { error } =
       await supabase.storage
-        .from("services")
-        .upload(fileName, file, {
-          cacheControl: "3600",
-          upsert: false,
-        });
+        .from("blogs")
+        .upload(fileName, file);
 
     if (error) {
-      console.error(error);
-
       return Response.json(
         { error: error.message },
         { status: 400 }
@@ -43,16 +38,13 @@ export async function POST(req: Request) {
     const {
       data: { publicUrl },
     } = supabase.storage
-      .from("services")
+      .from("blogs")
       .getPublicUrl(fileName);
 
     return Response.json({
-      success: true,
       url: publicUrl,
     });
   } catch (error) {
-    console.error(error);
-
     return Response.json(
       { error: "Upload failed" },
       { status: 500 }

@@ -95,6 +95,8 @@ export default function ServicesPage() {
       if (res.ok) {
         form.reset();
 
+        setImageUrl("");
+
         fetchServices();
       }
     } catch (error) {
@@ -160,6 +162,7 @@ export default function ServicesPage() {
         <ImageUpload
           value={imageUrl}
           onChange={setImageUrl}
+          uploadEndpoint="/api/upload/service-image"
         />
 
         <input

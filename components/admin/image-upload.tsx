@@ -13,11 +13,13 @@ interface Props {
   onChange: (
     value: string
   ) => void;
+  uploadEndpoint?: string;
 }
 
 export default function ImageUpload({
   value,
   onChange,
+  uploadEndpoint,
 }: Props) {
   const inputRef =
     useRef<HTMLInputElement>(null);
@@ -40,7 +42,7 @@ export default function ImageUpload({
     formData.append("file", file);
 
     const res = await fetch(
-      "/api/upload/service-image",
+      uploadEndpoint || "/api/upload/portfolio-image",
       {
         method: "POST",
         body: formData,
@@ -48,6 +50,8 @@ export default function ImageUpload({
     );
 
     const data = await res.json();
+
+    console.log(data);
 
     if (data.url) {
       onChange(data.url);
