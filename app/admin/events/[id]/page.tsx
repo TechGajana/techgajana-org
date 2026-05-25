@@ -2,19 +2,26 @@
 
 import { useEffect, useState } from "react";
 
-import EventsTable from "@/components/admin/events-table";
+import {
+  useParams,
+  useRouter,
+} from "next/navigation";
 
 import ImageUpload from "@/components/admin/image-upload";
 
 import RichTextEditor from "@/components/admin/rich-text-editor";
 
-import PageHeader from "@/components/admin/page-header";
-
 import SeoFields from "@/components/admin/seo-fields";
 
-export default function EventsPage() {
-  const [events, setEvents] =
-    useState<any[]>([]);
+import PageHeader from "@/components/admin/page-header";
+
+export default function EditEventPage() {
+  const params = useParams();
+
+  const router = useRouter();
+
+  const [event, setEvent] =
+    useState<any>(null);
 
   const [loading, setLoading] =
     useState(false);
@@ -28,7 +35,7 @@ export default function EventsPage() {
   const [featured, setFeatured] =
     useState(false);
 
-  async function fetchEvents() {
+  async function fetchEvent() {
     try {
       const res = await fetch(
         "/api/events/list"
@@ -36,14 +43,35 @@ export default function EventsPage() {
 
       const data = await res.json();
 
-      setEvents(data.events || []);
+      const foundEvent =
+        data.events.find(
+          (item: any) =>
+            item.id === params.id
+        );
+
+      if (!foundEvent) return;
+
+      setEvent(foundEvent);
+
+      setBannerUrl(
+        foundEvent.banner_url || ""
+      );
+
+      setContent(
+        foundEvent.full_description ||
+          ""
+      );
+
+      setFeatured(
+        foundEvent.featured || false
+      );
     } catch (error) {
       console.error(error);
     }
   }
 
   useEffect(() => {
-    fetchEvents();
+    fetchEvent();
   }, []);
 
   async function handleSubmit(
@@ -53,12 +81,13 @@ export default function EventsPage() {
 
     setLoading(true);
 
-    const form =
-      e.currentTarget;
-
-    const formData = new FormData(form);
+    const formData = new FormData(
+      e.currentTarget
+    );
 
     const body = {
+      id: params.id,
+
       title: formData.get("title"),
 
       slug: formData.get("slug"),
@@ -102,7 +131,7 @@ export default function EventsPage() {
 
     try {
       const res = await fetch(
-        "/api/events/create",
+        "/api/events/update",
         {
           method: "POST",
 
@@ -116,15 +145,11 @@ export default function EventsPage() {
       );
 
       if (res.ok) {
-        form.reset();
+        router.push(
+          "/admin/events"
+        );
 
-        setBannerUrl("");
-
-        setContent("");
-
-        setFeatured(false);
-
-        fetchEvents();
+        router.refresh();
       }
     } catch (error) {
       console.error(error);
@@ -133,37 +158,43 @@ export default function EventsPage() {
     }
   }
 
+  if (!event) {
+    return (
+      <div className="p-10">
+        Loading...
+      </div>
+    );
+  }
+
   return (
     <div>
       <PageHeader
-        title="Events"
-        description="Manage all events here."
+        title="Edit Event"
+        description="Update your event details."
       />
 
-      {/* CREATE FORM */}
       <form
         onSubmit={handleSubmit}
         className="mt-10 space-y-5 rounded-2xl border bg-white p-6"
       >
         <input
           name="title"
-          placeholder="Event Title"
+          defaultValue={event.title}
           className="w-full rounded-lg border p-3"
-          required
         />
 
         <input
           name="slug"
-          placeholder="Event Slug"
+          defaultValue={event.slug}
           className="w-full rounded-lg border p-3"
-          required
         />
 
         <textarea
           name="short_description"
-          placeholder="Short Description"
+          defaultValue={
+            event.short_description
+          }
           className="w-full rounded-lg border p-3"
-          required
         />
 
         {/* Banner Upload */}
@@ -179,7 +210,7 @@ export default function EventsPage() {
           />
         </div>
 
-        {/* Rich Content */}
+        {/* Full Description */}
         <div>
           <p className="mb-2 text-sm font-medium">
             Full Description
@@ -193,7 +224,7 @@ export default function EventsPage() {
 
         <input
           name="location"
-          placeholder="Location"
+          defaultValue={event.location}
           className="w-full rounded-lg border p-3"
         />
 
@@ -201,24 +232,33 @@ export default function EventsPage() {
           <input
             type="date"
             name="event_date"
+            defaultValue={
+              event.event_date
+            }
             className="w-full rounded-lg border p-3"
           />
 
           <input
             type="time"
             name="event_time"
+            defaultValue={
+              event.event_time
+            }
             className="w-full rounded-lg border p-3"
           />
         </div>
 
         <input
           name="registration_link"
-          placeholder="Registration Link"
+          defaultValue={
+            event.registration_link
+          }
           className="w-full rounded-lg border p-3"
         />
 
         <select
           name="status"
+          defaultValue={event.status}
           className="w-full rounded-lg border p-3"
         >
           <option value="upcoming">
@@ -250,20 +290,19 @@ export default function EventsPage() {
         </label>
 
         {/* SEO */}
-        <SeoFields />
+        <SeoFields
+          seoTitle={event.seo_title}
+          seoDescription={
+            event.seo_description
+          }
+        />
 
         <button className="rounded-xl bg-black px-6 py-3 text-white">
           {loading
-            ? "Creating..."
-            : "Create Event"}
+            ? "Updating..."
+            : "Update Event"}
         </button>
       </form>
-
-      {/* EVENTS TABLE */}
-      <EventsTable
-        events={events}
-        fetchEvents={fetchEvents}
-      />
     </div>
   );
 }

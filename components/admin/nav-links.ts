@@ -53,8 +53,8 @@ export const navLinks = [
     icon: FileText,
   },
   {
-    title: "Reviews",
-    href: "/admin/reviews",
+    title: "Testimonials",
+    href: "/admin/testimonials",
     icon: Star,
   },
   {

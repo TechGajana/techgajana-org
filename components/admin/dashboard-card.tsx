@@ -1,30 +1,45 @@
-import type { ReactNode } from "react";
+import React from "react";
 
-interface DashboardCardProps {
+interface Props {
   title: string;
-  value: string;
-  icon: ReactNode;
+
+  value: string | number;
+
+  icon?: React.ReactNode;
+
+  description?: string;
 }
 
 export default function DashboardCard({
   title,
   value,
   icon,
-}: DashboardCardProps) {
+  description,
+}: Props) {
   return (
     <div className="rounded-2xl border bg-white p-6 shadow-sm">
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between">
         <div>
           <p className="text-sm text-gray-500">
             {title}
           </p>
 
-          <h3 className="mt-2 text-3xl font-bold">
+          <h2 className="mt-2 text-3xl font-bold">
             {value}
-          </h3>
+          </h2>
+
+          {description && (
+            <p className="mt-2 text-sm text-gray-400">
+              {description}
+            </p>
+          )}
         </div>
 
-        <div>{icon}</div>
+        {icon && (
+          <div className="rounded-xl bg-gray-100 p-3">
+            {icon}
+          </div>
+        )}
       </div>
     </div>
   );
