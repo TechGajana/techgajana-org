@@ -4,15 +4,32 @@ import Image from "next/image";
 
 import Link from "next/link";
 
-interface Props {
-  products: any[];
+type Product = {
+  id: string;
+  title: string;
+  thumbnail?: string;
+  price?: number;
+  free_product?: boolean;
+  featured?: boolean;
+  active?: boolean;
+  store_categories?: {
+    name: string;
+  };
+};
 
+interface Props {
+  products: Product[];
   fetchProducts: () => void;
+
+  selected: string[];
+  toggleSelect: (id: string) => void;
 }
 
 export default function StoreProductsTable({
   products,
   fetchProducts,
+  selected,
+  toggleSelect,
 }: Props) {
   async function handleDelete(
     id: string
@@ -48,6 +65,11 @@ export default function StoreProductsTable({
       <table className="w-full">
         <thead className="bg-gray-100">
           <tr>
+
+            <th className="px-6 py-4 text-left">
+              Select
+            </th>
+
             <th className="px-6 py-4 text-left">
               Thumbnail
             </th>
@@ -84,6 +106,15 @@ export default function StoreProductsTable({
               key={product.id}
               className="border-t"
             >
+
+              <td className="px-6 py-4">
+                <input
+                  type="checkbox"
+                  checked={selected?.includes(product.id)}
+                  onChange={() => toggleSelect(product.id)}
+                />
+              </td>
+
               <td className="px-6 py-4">
                 <Image
                   src={
@@ -127,7 +158,7 @@ export default function StoreProductsTable({
 
               <td className="flex gap-3 px-6 py-4">
                 <Link
-                  href={`/admin/store/${product.id}`}
+                  href={`/admin/stores/${product.id}`}
                 >
                   <button className="rounded-lg bg-black px-4 py-2 text-white">
                     Edit

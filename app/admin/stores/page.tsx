@@ -34,6 +34,23 @@ export default function StorePage() {
   const [freeProduct, setFreeProduct] =
     useState(false);
 
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("all");
+  const [status, setStatus] = useState("all"); // active/inactive
+  const [type, setType] = useState("all"); // free/paid
+
+
+  const [selected, setSelected] = useState<string[]>([]);
+
+  const [selectAll, setSelectAll] = useState(false);
+
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [total, setTotal] = useState(0);
+
+  const [sort, setSort] = useState("newest");
+
+
   // FETCH CATEGORIES
   async function fetchCategories() {
     const res = await fetch(
@@ -50,21 +67,18 @@ export default function StorePage() {
   // FETCH PRODUCTS
   async function fetchProducts() {
     const res = await fetch(
-      "/api/store/products/list"
+      `/api/store/products/list?page=${page}&limit=${limit}&sort=${sort}`
     );
 
     const data = await res.json();
 
-    setProducts(
-      data.products || []
-    );
+    setProducts(data.products || []);
+    setTotal(data.total || 0);
   }
 
   useEffect(() => {
-    fetchCategories();
-
     fetchProducts();
-  }, []);
+  }, [page, limit, sort]);
 
   // CREATE CATEGORY
   async function createCategory(
@@ -231,7 +245,93 @@ export default function StorePage() {
 
       fetchProducts();
     }
+
   }
+
+  {/*filter products based on search, category, status, and type*/ }
+
+  const filteredProducts = products.filter((p) => {
+    const matchSearch =
+      p.title?.toLowerCase().includes(search.toLowerCase());
+
+    const matchCategory =
+      category === "all" || p.category_id === category;
+
+    const matchStatus =
+      status === "all" ||
+      (status === "active" ? p.active : !p.active);
+
+    const matchType =
+      type === "all" ||
+      (type === "free"
+        ? p.free_product
+        : !p.free_product);
+
+    return (
+      matchSearch &&
+      matchCategory &&
+      matchStatus &&
+      matchType
+    );
+  });
+
+  // TOGGLE SELECTED PRODUCTS
+
+  function toggleSelect(id: string) {
+    setSelected((prev) =>
+      prev.includes(id)
+        ? prev.filter((x) => x !== id)
+        : [...prev, id]
+    );
+  }
+
+  // TOGGLE SELECT ALL
+
+  function handleSelectAll() {
+    if (selectAll) {
+      setSelected([]);
+      setSelectAll(false);
+    } else {
+      const allIds = filteredProducts.map((p) => p.id);
+      setSelected(allIds);
+      setSelectAll(true);
+    }
+  }
+
+  // RESET SELECTED WHEN FILTERS CHANGE
+  useEffect(() => {
+    setSelectAll(false);
+    setSelected([]);
+  }, [search, category, status, type]);
+
+
+  // BULK DELETE
+
+  async function bulkDelete() {
+    await fetch("/api/store/products/bulk-delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: selected }),
+    });
+
+    setSelected([]);
+    fetchProducts();
+  }
+
+  // BULK FEATURE
+
+  async function bulkFeature() {
+    await fetch("/api/store/products/bulk-feature", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: selected }),
+    });
+
+    setSelected([]);
+    fetchProducts();
+  }
+
+
 
   return (
     <div className="space-y-10">
@@ -492,13 +592,188 @@ export default function StorePage() {
         </form>
       </div>
 
+      {/* BULK ACTIONS */}
+
+      {selected.length > 0 && (
+        <div className="flex items-center gap-4 p-4 border rounded-xl bg-white mb-4">
+          <span className="text-sm font-medium">
+            {selected.length} selected
+          </span>
+
+          <button
+            onClick={bulkDelete}
+            className="bg-red-500 text-white px-4 py-2 rounded-lg"
+          >
+            Delete
+          </button>
+
+          <button
+            onClick={bulkFeature}
+            className="bg-yellow-500 text-white px-4 py-2 rounded-lg"
+          >
+            Feature
+          </button>
+
+          <button
+            onClick={() => setSelected([])}
+            className="text-sm underline"
+          >
+            Clear
+          </button>
+        </div>
+      )}
+
+      {/* SELECT ALL */}
+
+      <div className="flex items-center gap-3 mb-4">
+        <input
+          type="checkbox"
+          checked={selectAll}
+          onChange={handleSelectAll}
+        />
+
+        <span className="text-sm font-medium">
+          Select All ({filteredProducts.length})
+        </span>
+      </div>
+
+      {/* FILTERS */}
+
+      <div className="rounded-2xl border bg-white p-4 mb-6 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+          {/* SEARCH */}
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search products..."
+            className="w-full rounded-lg border p-3"
+          />
+
+          {/* CATEGORY */}
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full rounded-lg border p-3"
+          >
+            <option value="all">All Categories</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+
+          {/* STATUS */}
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            className="w-full rounded-lg border p-3"
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+
+          {/* TYPE */}
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            className="w-full rounded-lg border p-3"
+          >
+            <option value="all">All Types</option>
+            <option value="free">Free</option>
+            <option value="paid">Paid</option>
+          </select>
+        </div>
+
+        {/* RESET BUTTON */}
+        <button
+          onClick={() => {
+            setSearch("");
+            setCategory("all");
+            setStatus("all");
+            setType("all");
+          }}
+          className="text-sm text-blue-600 hover:underline"
+        >
+          Reset Filters
+        </button>
+      </div>
+
+      <select
+        value={sort}
+        onChange={(e) => {
+          setSort(e.target.value);
+          setPage(1);
+        }}
+        className="w-full rounded-lg border p-3"
+      >
+        <option value="newest">Newest First</option>
+        <option value="oldest">Oldest First</option>
+        <option value="price_low">Price: Low to High</option>
+        <option value="price_high">Price: High to Low</option>
+        <option value="name_az">Name A–Z</option>
+        <option value="name_za">Name Z–A</option>
+      </select>
+
       {/* PRODUCTS TABLE */}
       <StoreProductsTable
-        products={products}
+        products={filteredProducts}
         fetchProducts={
           fetchProducts
         }
+        selected={selected}
+        toggleSelect={toggleSelect}
       />
+
+      {/* PAGINATION */}
+
+      <div className="flex items-center justify-between mt-6">
+
+        <div className="text-sm text-gray-600">
+          Showing {products.length} products
+        </div>
+
+        <div className="flex gap-2 items-center">
+
+          <button
+            disabled={page === 1}
+            onClick={() => setPage((p) => p - 1)}
+            className="px-3 py-1 border rounded disabled:opacity-50"
+          >
+            Prev
+          </button>
+
+          <span className="text-sm">
+            Page {page}
+          </span>
+
+          <button
+            disabled={page * limit >= total}
+            onClick={() => setPage((p) => p + 1)}
+            className="px-3 py-1 border rounded disabled:opacity-50"
+          >
+            Next
+          </button>
+
+        </div>
+
+        <select
+          value={limit}
+          onChange={(e) => {
+            setLimit(Number(e.target.value));
+            setPage(1);
+          }}
+          className="border p-2 rounded"
+        >
+          <option value={5}>5</option>
+          <option value={10}>10</option>
+          <option value={20}>20</option>
+          <option value={50}>50</option>
+        </select>
+
+      </div>
     </div>
   );
 }

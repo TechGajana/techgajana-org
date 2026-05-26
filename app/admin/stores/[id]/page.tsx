@@ -44,65 +44,42 @@ export default function EditStoreProductPage() {
 
   // FETCH DATA
   async function fetchData() {
-    try {
-      // PRODUCTS
-      const productRes = await fetch(
-        "/api/store/products/list"
-      );
+  try {
+    const productRes = await fetch(
+      `/api/store/products/get?id=${params.id}`
+    );
 
-      const productData =
-        await productRes.json();
+    const productData = await productRes.json();
 
-      const found =
-        productData.products.find(
-          (item: any) =>
-            item.id === params.id
-        );
+    const found = productData.product;
 
-      if (!found) return;
+    if (!found) return;
 
-      setProduct(found);
+    setProduct(found);
 
-      setThumbnail(
-        found.thumbnail || ""
-      );
+    setThumbnail(found.thumbnail || "");
+    setZipFile(found.zip_file || "");
+    setFeatured(found.featured || false);
+    setActive(found.active ?? true); // FIXED
+    setFreeProduct(found.free_product || false);
 
-      setZipFile(
-        found.zip_file || ""
-      );
+    const categoryRes = await fetch(
+      "/api/store/categories/list"
+    );
 
-      setFeatured(
-        found.featured || false
-      );
+    const categoryData = await categoryRes.json();
 
-      setActive(
-        found.active || true
-      );
-
-      setFreeProduct(
-        found.free_product || false
-      );
-
-      // CATEGORIES
-      const categoryRes = await fetch(
-        "/api/store/categories/list"
-      );
-
-      const categoryData =
-        await categoryRes.json();
-
-      setCategories(
-        categoryData.categories ||
-          []
-      );
-    } catch (error) {
-      console.error(error);
-    }
+    setCategories(categoryData.categories || []);
+  } catch (error) {
+    console.error(error);
   }
+}
 
   useEffect(() => {
+  if (params.id) {
     fetchData();
-  }, []);
+  }
+}, [params.id]);
 
   // UPDATE PRODUCT
   async function handleSubmit(
@@ -209,9 +186,9 @@ export default function EditStoreProductPage() {
       );
 
       if (res.ok) {
-        router.push(
-          "/admin/store"
-        );
+        await new Promise((r) => setTimeout(r, 100));
+
+        router.replace("/admin/stores");
 
         router.refresh();
       }

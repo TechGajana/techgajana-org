@@ -17,6 +17,12 @@ export const navLinks = [
     href: "/admin/dashboard",
     icon: LayoutDashboard,
   },
+
+  {
+    title: "Analytics",
+    href: "/admin/stores/analytics",
+    icon: Briefcase,
+  },
   {
     title: "Services",
     href: "/admin/services",
