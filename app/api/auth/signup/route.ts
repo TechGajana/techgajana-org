@@ -8,19 +8,24 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     const {
+      name,
       email,
       password,
     } = body;
 
-    // LOGIN
+    // CREATE AUTH USER
     const {
       data,
       error,
-    } =
-      await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+    } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+        },
+      },
+    });
 
     if (error) {
       return Response.json(
@@ -35,15 +40,29 @@ export async function POST(req: Request) {
 
     const user = data.user;
 
-    // GET PROFILE
+    if (!user) {
+      return Response.json(
+        {
+          error:
+            "User creation failed",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    // INSERT INTO PROFILES TABLE
     const {
-      data: profile,
       error: profileError,
     } = await supabase
       .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
+      .insert({
+        id: user.id,
+        name,
+        email,
+        role: "user",
+      });
 
     if (profileError) {
       return Response.json(
@@ -59,12 +78,13 @@ export async function POST(req: Request) {
 
     return Response.json({
       success: true,
-      role: profile.role,
+      user,
     });
   } catch (error) {
     return Response.json(
       {
-        error: "Login failed",
+        error:
+          "Signup failed",
       },
       {
         status: 500,

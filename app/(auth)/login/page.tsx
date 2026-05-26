@@ -1,8 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-
 import { useState } from "react";
+
+import Link from "next/link";
+
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -10,12 +12,17 @@ export default function LoginPage() {
   const [loading, setLoading] =
     useState(false);
 
+  const [error, setError] =
+    useState("");
+
   async function handleSubmit(
     e: React.FormEvent<HTMLFormElement>
   ) {
     e.preventDefault();
 
     setLoading(true);
+
+    setError("");
 
     const formData = new FormData(
       e.currentTarget
@@ -46,53 +53,74 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error);
+        setError(data.error);
         return;
       }
 
-      router.push(
-        "/admin/dashboard"
-      );
-
-      router.refresh();
+      if (data.role === "admin") {
+        router.push("/admin/dashboard");
+      } else {
+        router.push("/dashboard");
+      }
+      
     } catch (error) {
-      console.error(error);
+      setError("Login failed");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center">
+    <main className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
       <form
         onSubmit={handleSubmit}
-        className="flex w-full max-w-md flex-col gap-4 rounded-xl border p-6"
+        className="flex w-full max-w-md flex-col gap-4 rounded-2xl border bg-white p-6 shadow-sm"
       >
-        <h1 className="text-2xl font-bold">
+        <h1 className="text-3xl font-bold">
           Login
         </h1>
+
+        <p className="text-sm text-gray-500">
+          Welcome back to TechGajana
+        </p>
 
         <input
           type="email"
           name="email"
-          placeholder="Email"
-          className="rounded-lg border p-3"
+          placeholder="Email Address"
           required
+          className="rounded-lg border p-3 outline-none focus:border-black"
         />
 
         <input
           type="password"
           name="password"
           placeholder="Password"
-          className="rounded-lg border p-3"
           required
+          className="rounded-lg border p-3 outline-none focus:border-black"
         />
 
-        <button className="rounded-lg bg-black p-3 text-white">
+        {error && (
+          <p className="text-sm text-red-500">
+            {error}
+          </p>
+        )}
+
+        <button className="rounded-lg bg-black p-3 text-white transition hover:opacity-90">
           {loading
             ? "Logging in..."
             : "Login"}
         </button>
+
+        <p className="text-center text-sm text-gray-500">
+          Don&apos;t have an account?{" "}
+          <Link
+            href="/signup"
+            className="font-medium text-black"
+          >
+            Signup
+          </Link>
+        </p>
       </form>
     </main>
   );
