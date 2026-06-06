@@ -76,11 +76,10 @@ export default function SignupPage() {
         </h1>
 
         <input
-          type="text"
           name="name"
           placeholder="Full Name"
           required
-          className="rounded-lg border p-3 outline-none focus:border-black"
+          className="rounded-lg border p-3"
         />
 
         <input

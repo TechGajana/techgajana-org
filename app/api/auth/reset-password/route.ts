@@ -5,27 +5,22 @@ export async function POST(
 req:Request
 ){
 
+try{
+
+
 const supabase =
 await createClient();
 
 
-
 const {
-name,
-email,
 password
 }=await req.json();
 
 
 
-const {
-data,
-error
-}=await supabase.auth.signUp({
-
-email,
+const {error} =
+await supabase.auth.updateUser({
 password
-
 });
 
 
@@ -45,35 +40,26 @@ status:400
 
 
 
-if(data.user){
-
-
-await supabase
-.from("profiles")
-.insert({
-
-id:data.user.id,
-
-name,
-
-email,
-
-role:"user"
-
+return Response.json({
+success:true
 });
+
+
+
+}catch(error){
+
+
+return Response.json(
+{
+error:"Password update failed"
+},
+{
+status:500
+}
+)
 
 
 }
-
-
-
-return Response.json({
-
-success:true,
-
-user:data.user
-
-});
 
 
 }
