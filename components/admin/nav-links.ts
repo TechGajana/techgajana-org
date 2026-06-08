@@ -64,6 +64,11 @@ export const navLinks = [
     icon: Star,
   },
   {
+    tittle: "Bookings",
+    href: "/admin/bookings",
+    icon: CalendarDays,
+  },
+  {
     title: "Settings",
     href: "/admin/settings",
     icon: Settings,
