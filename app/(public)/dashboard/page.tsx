@@ -9,38 +9,22 @@ export default function DashboardPage(){
 const router=useRouter();
 
 const [user,setUser]=useState<any>(null);
-const [stats,setStats]=useState({
-requests:0,
-projects:0,
-downloads:0
-});
 const [loading,setLoading]=useState(true);
-
 
 async function loadDashboard(){
 
 try{
 
-const sessionRes=await fetch("/api/auth/session");
-const session=await sessionRes.json();
+const res=await fetch("/api/auth/session");
 
-if(!session.user){
+const data=await res.json();
+
+if(!data.user){
 router.push("/login");
 return;
 }
 
-setUser(session.user);
-
-
-const statsRes=await fetch("/api/dashboard/stats");
-const statsData=await statsRes.json();
-
-setStats({
-requests:statsData.requests||0,
-projects:statsData.projects||0,
-downloads:statsData.downloads||0
-});
-
+setUser(data.user);
 
 }catch(error){
 
@@ -68,7 +52,7 @@ return(
 <div className="p-10">
 Loading...
 </div>
-)
+);
 
 }
 
@@ -79,66 +63,85 @@ return(
 <div className="mx-auto max-w-7xl">
 
 
-<div className="
-rounded-3xl bg-black p-8 text-white
-">
+<div className="rounded-3xl bg-black p-8 text-white">
 
 <h1 className="text-4xl font-bold">
 Welcome 👋
 </h1>
 
 <p className="mt-3 text-gray-300">
-{user.email}
+{user?.email}
 </p>
 
 <p className="mt-4 text-gray-400">
-Manage your services, projects and purchases.
+Manage your TechGajana account.
 </p>
 
 </div>
 
 
 
-<div className="
-mt-8 grid gap-6 md:grid-cols-3
-">
+<div className="mt-8 grid gap-6 md:grid-cols-3">
 
 
 <div className="rounded-2xl bg-white p-6 shadow">
 
 <p className="text-gray-500">
-Requests
+Services
 </p>
 
-<h2 className="mt-3 text-4xl font-bold">
-{stats.requests}
+<h2 className="mt-3 text-3xl font-bold">
+Explore
 </h2>
+
+<Link
+href="/services"
+className="mt-4 inline-block text-sm font-medium"
+>
+View Services →
+</Link>
 
 </div>
 
 
+
 <div className="rounded-2xl bg-white p-6 shadow">
 
 <p className="text-gray-500">
-Projects
+Bookings
 </p>
 
-<h2 className="mt-3 text-4xl font-bold">
-{stats.projects}
+<h2 className="mt-3 text-3xl font-bold">
+Manage
 </h2>
+
+<Link
+href="/dashboard/bookings"
+className="mt-4 inline-block text-sm font-medium"
+>
+View Requests →
+</Link>
 
 </div>
 
 
+
 <div className="rounded-2xl bg-white p-6 shadow">
 
 <p className="text-gray-500">
-Downloads
+Profile
 </p>
 
-<h2 className="mt-3 text-4xl font-bold">
-{stats.downloads}
+<h2 className="mt-3 text-3xl font-bold">
+Account
 </h2>
+
+<Link
+href="/profile"
+className="mt-4 inline-block text-sm font-medium"
+>
+Update →
+</Link>
 
 </div>
 
@@ -148,6 +151,7 @@ Downloads
 
 
 <div className="mt-10 grid gap-6 md:grid-cols-2">
+
 
 
 <div className="rounded-2xl bg-white p-6 shadow">
@@ -162,9 +166,7 @@ Quick Actions
 
 <Link
 href="/services"
-className="
-block rounded-xl bg-gray-100 p-4 hover:bg-gray-200
-"
+className="block rounded-xl bg-gray-100 p-4 hover:bg-gray-200"
 >
 Explore Services
 </Link>
@@ -172,21 +174,17 @@ Explore Services
 
 <Link
 href="/dashboard/bookings"
-className="
-block rounded-xl bg-gray-100 p-4 hover:bg-gray-200
-"
+className="block rounded-xl bg-gray-100 p-4 hover:bg-gray-200"
 >
-View Requests
+My Bookings
 </Link>
 
 
 <Link
 href="/profile"
-className="
-block rounded-xl bg-gray-100 p-4 hover:bg-gray-200
-"
+className="block rounded-xl bg-gray-100 p-4 hover:bg-gray-200"
 >
-Update Profile
+Edit Profile
 </Link>
 
 
@@ -201,31 +199,37 @@ Update Profile
 
 
 <h2 className="text-2xl font-bold">
-Account
+Account Details
 </h2>
 
 
-<div className="mt-5 space-y-3">
+<div className="mt-5 space-y-4">
 
 
-<p>
-Email:
+<div>
+
+<p className="text-sm text-gray-500">
+Email
 </p>
 
 <p className="rounded-lg bg-gray-100 p-3">
-{user.email}
+{user?.email}
 </p>
 
+</div>
 
-<p>
-User ID:
+
+
+<div>
+
+<p className="text-sm text-gray-500">
+User ID
 </p>
 
 <p className="break-all rounded-lg bg-gray-100 p-3 text-sm">
-{user.id}
+{user?.id}
 </p>
 
-
 </div>
 
 
@@ -237,7 +241,10 @@ User ID:
 
 </div>
 
+
 </div>
-)
+
+</div>
+);
 
 }

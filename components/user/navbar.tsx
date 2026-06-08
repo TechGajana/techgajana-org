@@ -70,6 +70,13 @@ className="hover:text-blue-600"
 Services
 </Link>
 
+<Link
+href="/blogs"
+className="hover:text-blue-600"
+>
+Blogs
+</Link>
+
 
 <Link
 href="/store"
@@ -83,7 +90,7 @@ Store
 href="/dashboard/bookings"
 className="hover:text-blue-600"
 >
-Requests
+Bookings
 </Link>
 
 
@@ -119,7 +126,7 @@ border bg-white p-3 shadow
 
 
 <Link
-href="/dashboard/profile"
+href="/profile"
 className="
 block rounded p-2 hover:bg-gray-100
 "
@@ -129,7 +136,7 @@ Profile
 
 
 <Link
-href="/dashboard/settings"
+href="/settings"
 className="
 block rounded p-2 hover:bg-gray-100
 "
