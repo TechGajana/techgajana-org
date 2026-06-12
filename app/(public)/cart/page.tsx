@@ -331,15 +331,15 @@ Total
 
 
 
+<Link href="/checkout">
+
 <button
-
 className="mt-8 w-full rounded-xl bg-black px-6 py-4 text-white"
-
 >
-
 Proceed Checkout
-
 </button>
+
+</Link>
 
 
 
