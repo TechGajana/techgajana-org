@@ -11,3 +11,19 @@ body {
   background: #ffffff;
   color: #000000;
 }
+
+
+.input {
+  width:100%;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  padding:12px;
+  outline:none;
+}
+
+.input:focus {
+  border-color:#000;
+}
+
+
+

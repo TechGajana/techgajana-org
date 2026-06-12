@@ -172,6 +172,23 @@ Explore Services
 </Link>
 
 
+
+<Link
+href="/dashboard/blogs/create"
+className="block rounded-xl bg-gray-100 p-4 hover:bg-gray-200"
+>
+Create Blog
+</Link>
+
+
+<Link
+href="/dashboard/blogs"
+className="block rounded-xl bg-gray-100 p-4 hover:bg-gray-200"
+>
+My Blogs
+</Link>
+
+
 <Link
 href="/dashboard/bookings"
 className="block rounded-xl bg-gray-100 p-4 hover:bg-gray-200"

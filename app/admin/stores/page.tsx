@@ -1,779 +1,629 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {useEffect,useState} from "react";
+import Link from "next/link";
 
-import ImageUpload from "@/components/admin/image-upload";
+type Category={
+id:string;
+name:string;
+};
 
-import StoreFileUpload from "@/components/admin/store-file-upload";
 
-import StoreProductsTable from "@/components/admin/store-products-table";
+type Product={
+id:string;
+title:string;
+thumbnail:string;
+price:number;
+active:boolean;
+status:string;
+};
 
-import StoreCategoriesTable from "@/components/admin/store-categories-table";
 
-import PageHeader from "@/components/admin/page-header";
+export default function StoresPage(){
 
-export default function StorePage() {
-  const [categories, setCategories] =
-    useState<any[]>([]);
+const [categories,setCategories]=useState<Category[]>([]);
+const [products,setProducts]=useState<Product[]>([]);
 
-  const [products, setProducts] =
-    useState<any[]>([]);
+const [thumbnail,setThumbnail]=useState("");
+const [zip,setZip]=useState("");
 
-  const [thumbnail, setThumbnail] =
-    useState("");
+const [loading,setLoading]=useState(false);
 
-  const [zipFile, setZipFile] =
-    useState("");
 
-  const [featured, setFeatured] =
-    useState(false);
+async function loadData(){
 
-  const [active, setActive] =
-    useState(true);
+const cat=await fetch(
+"/api/store/categories/list"
+);
 
-  const [freeProduct, setFreeProduct] =
-    useState(false);
+const catData=await cat.json();
 
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("all");
-  const [status, setStatus] = useState("all"); // active/inactive
-  const [type, setType] = useState("all"); // free/paid
+setCategories(
+catData.categories || []
+);
 
 
-  const [selected, setSelected] = useState<string[]>([]);
+const prod=await fetch(
+"/api/store/products/list"
+);
 
-  const [selectAll, setSelectAll] = useState(false);
+const prodData=await prod.json();
 
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [total, setTotal] = useState(0);
+setProducts(
+prodData.products || []
+);
 
-  const [sort, setSort] = useState("newest");
+}
 
 
-  // FETCH CATEGORIES
-  async function fetchCategories() {
-    const res = await fetch(
-      "/api/store/categories/list"
-    );
+useEffect(()=>{
 
-    const data = await res.json();
+loadData();
 
-    setCategories(
-      data.categories || []
-    );
-  }
+},[]);
 
-  // FETCH PRODUCTS
-  async function fetchProducts() {
-    const res = await fetch(
-      `/api/store/products/list?page=${page}&limit=${limit}&sort=${sort}`
-    );
 
-    const data = await res.json();
 
-    setProducts(data.products || []);
-    setTotal(data.total || 0);
-  }
+async function uploadFile(
+file:File,
+endpoint:string
+){
 
-  useEffect(() => {
-    fetchProducts();
-  }, [page, limit, sort]);
+const form=new FormData();
 
-  // CREATE CATEGORY
-  async function createCategory(
-    e: React.FormEvent<HTMLFormElement>
-  ) {
-    e.preventDefault();
+form.append(
+"file",
+file
+);
 
-    const form = e.currentTarget;
 
-    const formData = new FormData(form);
+const res=await fetch(
+endpoint,
+{
+method:"POST",
+body:form
+}
+);
 
-    const body = {
-      name: formData.get("name"),
 
-      slug: formData.get("slug"),
+const data=await res.json();
 
-      description:
-        formData.get(
-          "description"
-        ),
+return data.url;
 
-      featured:
-        formData.get(
-          "featured"
-        ) === "on",
+}
 
-      active:
-        formData.get("active") ===
-        "on",
-    };
-
-    const res = await fetch(
-      "/api/store/categories/create",
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
-
-        body: JSON.stringify(body),
-      }
-    );
-
-    if (res.ok) {
-      form.reset();
-
-      fetchCategories();
-    }
-  }
-
-  // CREATE PRODUCT
-  async function createProduct(
-    e: React.FormEvent<HTMLFormElement>
-  ) {
-    e.preventDefault();
 
-    const form = e.currentTarget;
 
-    const formData = new FormData(form);
 
-    const body = {
-      title: formData.get("title"),
+async function submitProduct(
+e:React.FormEvent<HTMLFormElement>
+){
 
-      slug: formData.get("slug"),
+e.preventDefault();
 
-      short_description:
-        formData.get(
-          "short_description"
-        ),
+setLoading(true);
 
-      full_description:
-        formData.get(
-          "full_description"
-        ),
+const form = e.currentTarget;
 
-      thumbnail,
+const formData = new FormData(form);
 
-      zip_file: zipFile,
 
-      version:
-        formData.get("version"),
+const body={
 
-      category_id:
-        formData.get(
-          "category_id"
-        ),
+title:
+formData.get("title"),
 
-      product_type:
-        formData.get(
-          "product_type"
-        ),
+slug:
+formData.get("slug"),
 
-      tags: (
-        formData.get(
-          "tags"
-        ) as string
-      )
-        .split(",")
-        .map((tag) =>
-          tag.trim()
-        ),
+short_description:
+formData.get("short"),
 
-      price: Number(
-        formData.get("price")
-      ),
+full_description:
+formData.get("description"),
 
-      discount_price: Number(
-        formData.get(
-          "discount_price"
-        )
-      ),
+thumbnail,
 
-      free_product: freeProduct,
+zip_file:zip,
 
-      featured,
+category_id:
+formData.get("category"),
 
-      active,
+product_type:
+formData.get("type"),
 
-      demo_url:
-        formData.get("demo_url"),
-
-      documentation_url:
-        formData.get(
-          "documentation_url"
-        ),
 
-      seo_title:
-        formData.get("seo_title"),
+tags:
+String(formData.get("tags"))
+.split(",")
+.map((x)=>x.trim()),
 
-      seo_description:
-        formData.get(
-          "seo_description"
-        ),
-    };
 
-    const res = await fetch(
-      "/api/store/products/create",
-      {
-        method: "POST",
+price:Number(
+formData.get("price")
+),
 
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
-
-        body: JSON.stringify(body),
-      }
-    );
-
-    if (res.ok) {
-      form.reset();
 
-      setThumbnail("");
+discount_price:Number(
+formData.get("discount")
+),
 
-      setZipFile("");
 
-      setFeatured(false);
+free_product:
+formData.get("free")==="on",
 
-      setActive(true);
 
-      setFreeProduct(false);
+featured:
+formData.get("featured")==="on",
 
-      fetchProducts();
-    }
-
-  }
 
-  {/*filter products based on search, category, status, and type*/ }
-
-  const filteredProducts = products.filter((p) => {
-    const matchSearch =
-      p.title?.toLowerCase().includes(search.toLowerCase());
-
-    const matchCategory =
-      category === "all" || p.category_id === category;
-
-    const matchStatus =
-      status === "all" ||
-      (status === "active" ? p.active : !p.active);
-
-    const matchType =
-      type === "all" ||
-      (type === "free"
-        ? p.free_product
-        : !p.free_product);
-
-    return (
-      matchSearch &&
-      matchCategory &&
-      matchStatus &&
-      matchType
-    );
-  });
-
-  // TOGGLE SELECTED PRODUCTS
-
-  function toggleSelect(id: string) {
-    setSelected((prev) =>
-      prev.includes(id)
-        ? prev.filter((x) => x !== id)
-        : [...prev, id]
-    );
-  }
-
-  // TOGGLE SELECT ALL
-
-  function handleSelectAll() {
-    if (selectAll) {
-      setSelected([]);
-      setSelectAll(false);
-    } else {
-      const allIds = filteredProducts.map((p) => p.id);
-      setSelected(allIds);
-      setSelectAll(true);
-    }
-  }
-
-  // RESET SELECTED WHEN FILTERS CHANGE
-  useEffect(() => {
-    setSelectAll(false);
-    setSelected([]);
-  }, [search, category, status, type]);
-
-
-  // BULK DELETE
-
-  async function bulkDelete() {
-    await fetch("/api/store/products/bulk-delete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: selected }),
-    });
-
-    setSelected([]);
-    fetchProducts();
-  }
-
-  // BULK FEATURE
-
-  async function bulkFeature() {
-    await fetch("/api/store/products/bulk-feature", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: selected }),
-    });
-
-    setSelected([]);
-    fetchProducts();
-  }
-
-
-
-  return (
-    <div className="space-y-10">
-      <PageHeader
-        title="Store CMS"
-        description="Manage digital products and categories."
-      />
-
-      {/* CATEGORY FORM */}
-      <div className="rounded-2xl border bg-white p-6">
-        <h2 className="mb-5 text-2xl font-bold">
-          Create Category
-        </h2>
-
-        <form
-          onSubmit={createCategory}
-          className="space-y-4"
-        >
-          <input
-            name="name"
-            placeholder="Category Name"
-            className="w-full rounded-lg border p-3"
-            required
-          />
-
-          <input
-            name="slug"
-            placeholder="Slug"
-            className="w-full rounded-lg border p-3"
-            required
-          />
-
-          <textarea
-            name="description"
-            placeholder="Description"
-            className="w-full rounded-lg border p-3"
-          />
-
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="featured"
-            />
-
-            Featured
-          </label>
-
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="active"
-              defaultChecked
-            />
-
-            Active
-          </label>
-
-          <button className="rounded-xl bg-black px-6 py-3 text-white">
-            Create Category
-          </button>
-        </form>
-      </div>
-
-      {/* CATEGORY TABLE */}
-      <StoreCategoriesTable
-        categories={categories}
-        fetchCategories={
-          fetchCategories
-        }
-      />
-
-      {/* PRODUCT FORM */}
-      <div className="rounded-2xl border bg-white p-6">
-        <h2 className="mb-5 text-2xl font-bold">
-          Create Product
-        </h2>
-
-        <form
-          onSubmit={createProduct}
-          className="space-y-4"
-        >
-          <input
-            name="title"
-            placeholder="Title"
-            className="w-full rounded-lg border p-3"
-            required
-          />
-
-          <input
-            name="slug"
-            placeholder="Slug"
-            className="w-full rounded-lg border p-3"
-            required
-          />
-
-          <textarea
-            name="short_description"
-            placeholder="Short Description"
-            className="w-full rounded-lg border p-3"
-          />
-
-          <textarea
-            name="full_description"
-            placeholder="Full Description"
-            className="w-full rounded-lg border p-3"
-            rows={6}
-          />
-
-          {/* THUMBNAIL */}
-          <div>
-            <p className="mb-2 text-sm font-medium">
-              Thumbnail
-            </p>
-
-            <ImageUpload
-              value={thumbnail}
-              onChange={setThumbnail}
-              uploadEndpoint="/api/upload/store-thumbnail"
-            />
-          </div>
-
-          {/* ZIP FILE */}
-          <div>
-            <p className="mb-2 text-sm font-medium">
-              Product ZIP File
-            </p>
-
-            <StoreFileUpload
-              value={zipFile}
-              onChange={setZipFile}
-            />
-          </div>
-
-          <input
-            name="version"
-            placeholder="Version"
-            defaultValue="1.0.0"
-            className="w-full rounded-lg border p-3"
-          />
-
-          {/* CATEGORY */}
-          <select
-            name="category_id"
-            className="w-full rounded-lg border p-3"
-          >
-            <option value="">
-              Select Category
-            </option>
-
-            {categories.map(
-              (category) => (
-                <option
-                  key={category.id}
-                  value={category.id}
-                >
-                  {category.name}
-                </option>
-              )
-            )}
-          </select>
-
-          <input
-            name="product_type"
-            placeholder="Product Type"
-            className="w-full rounded-lg border p-3"
-          />
-
-          <input
-            name="tags"
-            placeholder="Tags separated by commas"
-            className="w-full rounded-lg border p-3"
-          />
-
-          <input
-            type="number"
-            name="price"
-            placeholder="Price"
-            className="w-full rounded-lg border p-3"
-          />
-
-          <input
-            type="number"
-            name="discount_price"
-            placeholder="Discount Price"
-            className="w-full rounded-lg border p-3"
-          />
-
-          <input
-            name="demo_url"
-            placeholder="Demo URL"
-            className="w-full rounded-lg border p-3"
-          />
-
-          <input
-            name="documentation_url"
-            placeholder="Documentation URL"
-            className="w-full rounded-lg border p-3"
-          />
-
-          <input
-            name="seo_title"
-            placeholder="SEO Title"
-            className="w-full rounded-lg border p-3"
-          />
-
-          <textarea
-            name="seo_description"
-            placeholder="SEO Description"
-            className="w-full rounded-lg border p-3"
-          />
-
-          {/* TOGGLES */}
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={freeProduct}
-              onChange={(e) =>
-                setFreeProduct(
-                  e.target.checked
-                )
-              }
-            />
-
-            Free Product
-          </label>
-
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={featured}
-              onChange={(e) =>
-                setFeatured(
-                  e.target.checked
-                )
-              }
-            />
-
-            Featured
-          </label>
-
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={active}
-              onChange={(e) =>
-                setActive(
-                  e.target.checked
-                )
-              }
-            />
-
-            Active
-          </label>
-
-          <button className="rounded-xl bg-black px-6 py-3 text-white">
-            Create Product
-          </button>
-        </form>
-      </div>
-
-      {/* BULK ACTIONS */}
-
-      {selected.length > 0 && (
-        <div className="flex items-center gap-4 p-4 border rounded-xl bg-white mb-4">
-          <span className="text-sm font-medium">
-            {selected.length} selected
-          </span>
-
-          <button
-            onClick={bulkDelete}
-            className="bg-red-500 text-white px-4 py-2 rounded-lg"
-          >
-            Delete
-          </button>
-
-          <button
-            onClick={bulkFeature}
-            className="bg-yellow-500 text-white px-4 py-2 rounded-lg"
-          >
-            Feature
-          </button>
-
-          <button
-            onClick={() => setSelected([])}
-            className="text-sm underline"
-          >
-            Clear
-          </button>
-        </div>
-      )}
-
-      {/* SELECT ALL */}
-
-      <div className="flex items-center gap-3 mb-4">
-        <input
-          type="checkbox"
-          checked={selectAll}
-          onChange={handleSelectAll}
-        />
-
-        <span className="text-sm font-medium">
-          Select All ({filteredProducts.length})
-        </span>
-      </div>
-
-      {/* FILTERS */}
-
-      <div className="rounded-2xl border bg-white p-4 mb-6 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-
-          {/* SEARCH */}
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search products..."
-            className="w-full rounded-lg border p-3"
-          />
-
-          {/* CATEGORY */}
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded-lg border p-3"
-          >
-            <option value="all">All Categories</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-
-          {/* STATUS */}
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="w-full rounded-lg border p-3"
-          >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
-
-          {/* TYPE */}
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            className="w-full rounded-lg border p-3"
-          >
-            <option value="all">All Types</option>
-            <option value="free">Free</option>
-            <option value="paid">Paid</option>
-          </select>
-        </div>
-
-        {/* RESET BUTTON */}
-        <button
-          onClick={() => {
-            setSearch("");
-            setCategory("all");
-            setStatus("all");
-            setType("all");
-          }}
-          className="text-sm text-blue-600 hover:underline"
-        >
-          Reset Filters
-        </button>
-      </div>
-
-      <select
-        value={sort}
-        onChange={(e) => {
-          setSort(e.target.value);
-          setPage(1);
-        }}
-        className="w-full rounded-lg border p-3"
-      >
-        <option value="newest">Newest First</option>
-        <option value="oldest">Oldest First</option>
-        <option value="price_low">Price: Low to High</option>
-        <option value="price_high">Price: High to Low</option>
-        <option value="name_az">Name A–Z</option>
-        <option value="name_za">Name Z–A</option>
-      </select>
-
-      {/* PRODUCTS TABLE */}
-      <StoreProductsTable
-        products={filteredProducts}
-        fetchProducts={
-          fetchProducts
-        }
-        selected={selected}
-        toggleSelect={toggleSelect}
-      />
-
-      {/* PAGINATION */}
-
-      <div className="flex items-center justify-between mt-6">
-
-        <div className="text-sm text-gray-600">
-          Showing {products.length} products
-        </div>
-
-        <div className="flex gap-2 items-center">
-
-          <button
-            disabled={page === 1}
-            onClick={() => setPage((p) => p - 1)}
-            className="px-3 py-1 border rounded disabled:opacity-50"
-          >
-            Prev
-          </button>
-
-          <span className="text-sm">
-            Page {page}
-          </span>
-
-          <button
-            disabled={page * limit >= total}
-            onClick={() => setPage((p) => p + 1)}
-            className="px-3 py-1 border rounded disabled:opacity-50"
-          >
-            Next
-          </button>
-
-        </div>
-
-        <select
-          value={limit}
-          onChange={(e) => {
-            setLimit(Number(e.target.value));
-            setPage(1);
-          }}
-          className="border p-2 rounded"
-        >
-          <option value={5}>5</option>
-          <option value={10}>10</option>
-          <option value={20}>20</option>
-          <option value={50}>50</option>
-        </select>
-
-      </div>
-    </div>
-  );
+active:
+formData.get("active")==="on",
+
+
+status:
+formData.get("status"),
+
+
+demo_url:
+formData.get("demo"),
+
+
+documentation_url:
+formData.get("docs"),
+
+
+seo_title:
+formData.get("seo_title"),
+
+
+seo_description:
+formData.get("seo_description")
+
+};
+
+
+
+try{
+
+const res=await fetch(
+"/api/store/products/create",
+{
+method:"POST",
+headers:{
+"Content-Type":
+"application/json"
+},
+body:JSON.stringify(body)
+}
+);
+
+
+if(!res.ok){
+
+throw new Error(
+"Product creation failed"
+);
+
+}
+
+
+// reset after successful save
+form.reset();
+
+setThumbnail("");
+
+setZip("");
+
+await loadData();
+
+
+}catch(error){
+
+console.log(error);
+
+}finally{
+
+setLoading(false);
+
+}
+
+}
+
+
+
+
+async function removeProduct(
+id:string
+){
+
+await fetch(
+"/api/store/products/delete",
+{
+method:"POST",
+headers:{
+"Content-Type":
+"application/json"
+},
+body:JSON.stringify({
+id
+})
+}
+);
+
+
+loadData();
+
+}
+
+
+
+
+return (
+
+<div className="space-y-8">
+
+
+<div className="flex items-center justify-between">
+
+<div>
+
+<h1 className="text-3xl font-bold">
+Store Management
+</h1>
+
+<p className="text-gray-500 mt-1">
+Manage products and categories
+</p>
+
+</div>
+
+
+<div className="flex gap-3">
+
+
+<Link
+href="/admin/stores/categories"
+className="rounded-xl bg-black px-5 py-3 text-white hover:opacity-90"
+>
+Create Category
+</Link>
+
+
+</div>
+
+
+</div>
+
+
+
+<form
+onSubmit={submitProduct}
+className="rounded-2xl border bg-white p-6 space-y-4"
+>
+
+
+<input
+name="title"
+placeholder="Product title"
+required
+className="input"
+/>
+
+
+<input
+name="slug"
+placeholder="product-slug"
+required
+className="input"
+/>
+
+
+
+<textarea
+name="short"
+placeholder="Short description"
+className="input"
+/>
+
+
+
+<textarea
+name="description"
+placeholder="Full description"
+className="input"
+/>
+
+
+
+<select
+name="category"
+className="input"
+>
+
+<option>
+Select category
+</option>
+
+{
+categories.map(c=>(
+
+<option
+key={c.id}
+value={c.id}
+>
+{c.name}
+</option>
+
+))
+}
+
+</select>
+
+
+
+<input
+name="type"
+placeholder="Product type (template/course)"
+className="input"
+/>
+
+
+
+<input
+name="tags"
+placeholder="tags comma separated"
+className="input"
+/>
+
+
+
+<input
+name="price"
+placeholder="Price"
+type="number"
+className="input"
+/>
+
+
+<input
+name="discount"
+placeholder="Discount price"
+type="number"
+className="input"
+/>
+
+
+
+<input
+name="demo"
+placeholder="Demo URL"
+className="input"
+/>
+
+
+
+<input
+name="docs"
+placeholder="Documentation URL"
+className="input"
+/>
+
+
+
+<input
+name="seo_title"
+placeholder="SEO title"
+className="input"
+/>
+
+
+
+<textarea
+name="seo_description"
+placeholder="SEO description"
+className="input"
+/>
+
+
+
+<input
+type="file"
+onChange={async(e)=>{
+
+if(e.target.files){
+
+const url=await uploadFile(
+e.target.files[0],
+"/api/upload/store-thumbnail"
+);
+
+setThumbnail(url);
+
+}
+
+}}
+/>
+
+
+
+<input
+type="file"
+onChange={async(e)=>{
+
+if(e.target.files){
+
+const url=await uploadFile(
+e.target.files[0],
+"/api/upload/store-file"
+);
+
+setZip(url);
+
+}
+
+}}
+/>
+
+
+
+<div className="flex gap-6">
+
+<label>
+<input
+type="checkbox"
+name="featured"
+/>
+ Featured
+</label>
+
+
+<label>
+<input
+type="checkbox"
+name="active"
+defaultChecked
+/>
+ Active
+</label>
+
+
+</div>
+
+
+
+<select
+name="status"
+className="input"
+>
+
+<option value="draft">
+Draft
+</option>
+
+<option value="published">
+Published
+</option>
+
+</select>
+
+
+
+<button
+className="rounded-xl bg-black px-6 py-3 text-white"
+>
+
+{
+loading
+?"Saving..."
+:"Create Product"
+}
+
+</button>
+
+
+</form>
+
+
+
+
+
+<div className="rounded-2xl border bg-white">
+
+<table className="w-full">
+
+<thead>
+
+<tr className="border-b">
+
+<th className="p-4 text-left">
+Product
+</th>
+
+<th>
+Price
+</th>
+
+<th>
+Status
+</th>
+
+<th>
+Action
+</th>
+
+</tr>
+
+</thead>
+
+
+
+<tbody>
+
+{
+products.map(p=>(
+
+<tr
+key={p.id}
+className="border-b"
+>
+
+
+<td className="p-4">
+
+<div className="flex gap-3">
+
+<img
+src={p.thumbnail}
+className="h-16 w-16 rounded object-cover"
+/>
+
+{p.title}
+
+</div>
+
+</td>
+
+
+<td>
+₹{p.price}
+</td>
+
+
+<td>
+{p.status}
+</td>
+
+
+<td>
+
+<button
+onClick={()=>removeProduct(p.id)}
+className="text-red-500"
+>
+Delete
+</button>
+
+
+</td>
+
+
+</tr>
+
+))
+
+}
+
+</tbody>
+
+
+</table>
+
+</div>
+
+
+</div>
+
+)
+
 }

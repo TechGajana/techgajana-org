@@ -9,6 +9,9 @@ import {
   FileText,
   Star,
   Settings,
+  User,
+  Users,
+ 
 } from "lucide-react";
 
 export const navLinks = [
@@ -38,6 +41,13 @@ export const navLinks = [
     href: "/admin/blogs",
     icon: Newspaper,
   },
+
+  {
+    name: "Community Blogs",
+    href: "/admin/community-blogs",
+    icon: Users,
+  },
+
   {
     title: "Events",
     href: "/admin/events",
